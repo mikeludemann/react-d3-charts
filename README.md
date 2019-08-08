@@ -6,6 +6,8 @@ A react component library for different chart types with D3JS
 
 * Pie
 * Donut
-* ...
+* Bar
 
-TBD
+## To-Do
+
+* More diagrams will follow over time
