@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import * as d3 from 'd3';
 import PropTypes from 'prop-types';
+import cloud from 'd3-cloud';
 
 class BarChart extends Component {
 	constructor(props) {
@@ -682,10 +683,7 @@ class TreemapChart extends Component {
 			.size([width, height])
 			.paddingTop(28)
 			.paddingRight(7)
-			.paddingInner(3)
-			//.paddingOuter(6)
-			//.padding(20)
-			(root)
+			.paddingInner(3)(root)
 
 		// Dynamic main data
 		var arr = [];
@@ -797,7 +795,7 @@ class TreemapChart extends Component {
 			.selectAll("titles")
 			.data(root.descendants().filter(function(d){
 				
-				return d.depth==1
+				return d.depth === 1
 			
 			}))
 			.enter()
@@ -851,11 +849,757 @@ TreemapChart.propTypes = {
 
 // ############################################################
 
+class ConnectScatterChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Add X-Axis
+    var x = d3.scaleTime()
+      .domain(d3.extent(info, function(d) {
+				
+				return d.number;
+
+			}))
+			.range([ 0, width ]);
+			
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+    // Y-Axis
+    var y = d3.scaleLinear()
+      .domain( [8000, 9200])
+			.range([ height, 0 ]);
+			
+    svg.append("g")
+      .call(d3.axisLeft(y));
+
+    // Add the line
+    svg.append("path")
+      .datum(info)
+      .attr("fill", "none")
+      .attr("stroke", "black")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.line()
+        .curve(d3.curveBasis)
+        .x(function(d) {
+					
+					return x(d.number);
+				
+				})
+        .y(function(d) {
+					
+					return y(d.value);
+				
+				})
+			)
+
+    // Create - Tooltip
+    var Tooltip = d3.select(element)
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "2px")
+      .style("border-radius", "5px")
+      .style("padding", "5px")
+
+		// Three functions for changing the tooltip
+		var mouseover = function(d) {
+			Tooltip
+				.style("opacity", 1)
+		}
+		
+		var mousemove = function(d) {
+			Tooltip
+				.html("Value: " + d.value)
+				.style("left", (d3.mouse(this)[0]+70) + "px")
+				.style("top", (d3.mouse(this)[1]) + "px")
+		}
+		
+		var mouseleave = function(d) {
+			Tooltip
+				.style("opacity", 0)
+		}
+
+    // Adding points
+    svg
+      .append("g")
+      .selectAll("dot")
+      .data(info)
+      .enter()
+      .append("circle")
+        .attr("class", "myCircle")
+        .attr("cx", function(d) {
+					
+					return x(d.number);
+				
+				})
+        .attr("cy", function(d) {
+					
+					return y(d.value);
+				
+				})
+        .attr("r", 8)
+        .attr("stroke", "#69b3a2")
+        .attr("stroke-width", 3)
+        .attr("fill", "white")
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave)
+
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+ConnectScatterChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.array.isRequired,
+	margin: PropTypes.number.isRequired
+}
+
+// ############################################################
+
+class MapChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		// Build element
+		var svg = d3.select(element),
+			width = +svg.attr("width", this.props.width),
+			height = +svg.attr("height", this.props.height);
+
+		// Map and Projection
+		var projection = d3.geoNaturalEarth1()
+			.scale(width / 1.3 / Math.PI)
+			.translate([width / 2, height / 2])
+
+		d3.json(info, function(data){
+
+			// Draw the map
+			svg.append("g")
+				.selectAll("path")
+				.data(data.features)
+				.enter().append("path")
+					.attr("fill", "#69b3a2")
+					.attr("d", d3.geoPath()
+						.projection(projection)
+					)
+					.style("stroke", "#fff")
+
+		})
+
+	}
+
+	render() {
+		return (
+			<svg className="chart" id={this.props.id}></svg>
+		);
+	}
+}
+
+MapChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired
+}
+
+// ############################################################
+
+class WordCloudChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// Construct a new cloud layout instance
+		var layout = cloud()
+			.size([width, height])
+			.words(info.map(function(d) {
+				
+				return {text: d.word, size:d.size};
+			
+			}))
+			.padding(5)
+			.rotate(function() {
+				
+				return ~~(Math.random() * 2) * 90;
+			
+			})
+			.fontSize(function(d) {
+				
+				return d.size;
+			
+			})
+			.on("end", draw);
+			layout.start();
+
+		// Function to takes the output of 'layout' above and draw the words
+		function draw(words) {
+			svg
+				.append("g")
+					.attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+					.selectAll("text")
+						.data(words)
+					.enter().append("text")
+						.style("font-size", function(d) {
+							
+							return d.size;
+						
+						})
+						.style("fill", "#69b3a2")
+						.attr("text-anchor", "middle")
+						.style("font-family", "Impact")
+						.attr("transform", function(d) {
+							
+							return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+
+						})
+						.text(function(d) {
+							
+							return d.text;
+						
+						});
+		}
+
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+WordCloudChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.array.isRequired,
+	margin: PropTypes.number.isRequired
+}
+
+// ############################################################
+
+class NetworkChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			// Initialize - Links
+			var link = svg
+				.selectAll("line")
+				.data(info.links)
+				.enter()
+				.append("line")
+					.style("stroke", "#aaa")
+
+			// Initialize - Nodes
+			var node = svg
+				.selectAll("circle")
+				.data(info.nodes)
+				.enter()
+				.append("circle")
+					.attr("r", 20)
+					.style("fill", "#69b3a2")
+
+			// List the force - Network
+			var simulation = d3.forceSimulation(info.nodes)
+				.force("link", d3.forceLink()
+					.id(function(d) {
+						
+						return d.id;
+					
+					})
+					.links(info.links)
+				)
+				.force("charge", d3.forceManyBody().strength(-400))
+				.force("center", d3.forceCenter(width / 2, height / 2))
+				.on("end", ticked);
+
+			// Iteration of the force algorithm - Updating the position of all nodes.
+			function ticked() {
+				link
+					.attr("x1", function(d) {
+						
+						return d.source.x;
+					
+					})
+					.attr("y1", function(d) {
+						
+						return d.source.y;
+					
+					})
+					.attr("x2", function(d) {
+						
+						return d.target.x;
+					
+					})
+					.attr("y2", function(d) {
+						
+						return d.target.y;
+					
+					});
+
+				node
+					.attr("cx", function (d) {
+						
+						return d.x+6;
+					
+					})
+					.attr("cy", function(d) {
+						
+						return d.y-6;
+					
+					});
+			}
+
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+NetworkChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.array.isRequired,
+	margin: PropTypes.number.isRequired
+}
+
+// ############################################################
+
+class TreeChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		document.getElementById(this.props.id).setAttribute("width", this.props.width);
+		document.getElementById(this.props.id).setAttribute("height", this.props.height);
+
+		var style = document.createElement('style');
+		style.type = 'text/css';
+
+		let styling =
+		`        
+		.node circle {
+			fill: #999;
+		}
+		
+		.node text {
+			font: 10px sans-serif;
+		}
+		
+		.node--internal circle {
+			fill: #555;
+		}
+		
+		.node--internal text {
+			text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+		}
+		
+		.link {
+			fill: none;
+			stroke: #555;
+			stroke-opacity: 0.4;
+			stroke-width: 1.5px;
+		}
+		
+		form {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			position: absolute;
+			left: 10px;
+			top: 10px;
+		}
+		
+		label {
+			display: block;
+		}
+		`
+
+		style.innerHTML = styling;
+		document.getElementsByTagName('head')[0].appendChild(style);
+
+		// Build element
+		var svg = d3.select(element),
+			width = +svg.attr("width"),
+			height = +svg.attr("height"),
+			g = svg.append("g").attr("transform", "translate(40,0)");
+
+		var tree = d3.tree()
+			.size([height - 400, width - 160]);
+			
+		var stratify = d3.stratify()
+			.parentId(function(d) {
+				
+				return d.id.substring(0, d.id.lastIndexOf("."));
+			
+			});
+		
+		var root = stratify(info)
+      .sort(function(a, b) {
+				
+				return (a.height - b.height) || a.id.localeCompare(b.id);
+			
+			});
+
+		tree(root);
+
+		var link = g.selectAll(".link")
+			.data(root.descendants().slice(1))
+			.enter().append("path")
+				.attr("class", "link")
+				.attr("d", diagonal);
+
+		var node = g.selectAll(".node")
+			.data(root.descendants())
+			.enter().append("g")
+				.attr("class", function(d) {
+					
+					return "node" + (d.children ? " node--internal" : " node--leaf");
+				
+				})
+				.attr("transform", function(d) {
+					
+					return "translate(" + d.y + "," + d.x + ")";
+				
+				});
+
+		node.append("circle")
+			.attr("r", 2.5);
+
+		node.append("text")
+			.attr("dy", 3)
+			.attr("x", function(d) {
+				
+				return d.children ? -8 : 8;
+			
+			})
+			.style("text-anchor", function(d) {
+				
+				return d.children ? "end" : "start";
+			
+			})
+			.text(function(d) {
+				
+				return d.id.substring(d.id.lastIndexOf(".") + 1);
+			
+			});
+
+		d3.selectAll("input")
+			.on("change", changed);
+
+		function changed() {
+			var t = d3.transition().duration(750);
+			node.transition(t).attr("transform", function(d) {
+				
+				return "translate(" + d.y + "," + d.x + ")";
+			
+			});
+			link.transition(t).attr("d", diagonal);
+		}
+
+		function diagonal(d) {
+			return "M" + d.y + "," + d.x
+				+ "C" + (d.parent.y + 100) + "," + d.x
+				+ " " + (d.parent.y + 100) + "," + d.parent.x
+				+ " " + d.parent.y + "," + d.parent.x;
+		}
+
+	}
+
+	render() {
+		return (
+			<svg className="chart" id={this.props.id}></svg>
+		);
+	}
+}
+
+TreeChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired
+}
+
+// ############################################################
+
+class ClusterChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		document.getElementById(this.props.id).setAttribute("width", this.props.width);
+		document.getElementById(this.props.id).setAttribute("height", this.props.height);
+
+		var style = document.createElement('style');
+		style.type = 'text/css';
+
+		let styling =
+		`        
+		.node circle {
+			fill: #999;
+		}
+		
+		.node text {
+			font: 10px sans-serif;
+		}
+		
+		.node--internal circle {
+			fill: #555;
+		}
+		
+		.node--internal text {
+			text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+		}
+		
+		.link {
+			fill: none;
+			stroke: #555;
+			stroke-opacity: 0.4;
+			stroke-width: 1.5px;
+		}
+		
+		form {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			position: absolute;
+			left: 10px;
+			top: 10px;
+		}
+		
+		label {
+			display: block;
+		}
+		`
+
+		style.innerHTML = styling;
+		document.getElementsByTagName('head')[0].appendChild(style);
+
+		// Build element
+		var svg = d3.select(element),
+			width = +svg.attr("width"),
+			height = +svg.attr("height"),
+			g = svg.append("g").attr("transform", "translate(40,0)");
+
+		var cluster = d3.cluster()
+			.size([height, width - 160]);
+			
+		var stratify = d3.stratify()
+			.parentId(function(d) {
+				
+				return d.id.substring(0, d.id.lastIndexOf("."));
+			
+			});
+		
+		var root = stratify(info)
+      .sort(function(a, b) {
+				
+				return (a.height - b.height) || a.id.localeCompare(b.id);
+			
+			});
+
+		cluster(root);
+
+		var link = g.selectAll(".link")
+			.data(root.descendants().slice(1))
+			.enter().append("path")
+				.attr("class", "link")
+				.attr("d", diagonal);
+
+		var node = g.selectAll(".node")
+			.data(root.descendants())
+			.enter().append("g")
+				.attr("class", function(d) {
+					
+					return "node" + (d.children ? " node--internal" : " node--leaf");
+				
+				})
+				.attr("transform", function(d) {
+					
+					return "translate(" + d.y + "," + d.x + ")";
+				
+				});
+
+		node.append("circle")
+			.attr("r", 2.5);
+
+		node.append("text")
+			.attr("dy", 3)
+			.attr("x", function(d) {
+				
+				return d.children ? -8 : 8;
+			
+			})
+			.style("text-anchor", function(d) {
+				
+				return d.children ? "end" : "start";
+			
+			})
+			.text(function(d) {
+				
+				return d.id.substring(d.id.lastIndexOf(".") + 1);
+			
+			});
+
+		d3.selectAll("input")
+			.on("change", changed);
+
+		function changed() {
+			var t = d3.transition().duration(750);
+			node.transition(t).attr("transform", function(d) {
+				
+				return "translate(" + d.y + "," + d.x + ")";
+			
+			});
+			link.transition(t).attr("d", diagonal);
+		}
+
+		function diagonal(d) {
+			return "M" + d.y + "," + d.x
+				+ "C" + (d.parent.y + 100) + "," + d.x
+				+ " " + (d.parent.y + 100) + "," + d.parent.x
+				+ " " + d.parent.y + "," + d.parent.x;
+		}
+
+	}
+
+	render() {
+		return (
+			<svg className="chart" id={this.props.id}></svg>
+		);
+	}
+}
+
+ClusterChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired
+}
+
+// ############################################################
+
 export {
 	BarChart,
 	PieChart,
 	DonutChart,
 	LineChart,
 	HistogramChart,
-	TreemapChart
+	TreemapChart,
+	ConnectScatterChart,
+	MapChart,
+	WordCloudChart,
+	NetworkChart,
+	TreeChart,
+	ClusterChart
 }
