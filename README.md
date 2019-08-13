@@ -7,6 +7,18 @@ A react component library for different chart types with D3JS
 * Pie
 * Donut
 * Bar
+* Line
+* Histogram
+* Treemap
+* Connect Scatter
+* Map
+* Wordcloud
+* Network
+* Tree
+* Cluster
+* Scatter
+* Lollipop
+* Parallel
 
 ## Examples
 
