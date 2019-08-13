@@ -1589,6 +1589,490 @@ ClusterChart.propTypes = {
 
 // ############################################################
 
+class ScatterChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// Dynamic main data
+		var arr = [];
+
+		for(var i = 0; i < info.length; i++){
+
+			arr.push(info[i].group);
+
+		}
+
+		function uniq(a) {
+			var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
+
+			return a.filter(function(item) {
+
+				var type = typeof item;
+				if(type in prims){
+
+					return prims[type].hasOwnProperty(item) ? false : (prims[type][item] = true);
+					
+				}	else {
+					
+					return objs.indexOf(item) >= 0 ? false : objs.push(item);
+				
+				}
+
+			});
+		}
+
+		// X-Axis
+		var x = d3.scaleLinear()
+			.domain([4, 8])
+			.range([ 0, width ]);
+		
+		svg.append("g")
+			.attr("transform", "translate(0," + height + ")")
+			.call(d3.axisBottom(x));
+
+		// Y-Axis
+		var y = d3.scaleLinear()
+			.domain([0, 9])
+			.range([ height, 0]);
+			
+		svg.append("g")
+			.call(d3.axisLeft(y));
+
+		// Color
+		var color = d3.scaleOrdinal()
+			.domain(uniq(arr))
+			.range(["#ff0000", "#c0c0c0", "#00ff00", "#ffa500", "#ffff00", "#008800", "#ff00ff", "#000080", "#0000ff", "#d2691e"]);
+
+		// Highlight
+		var highlight = function(d){
+
+			var selectGroup = d.group
+
+			d3.selectAll(".dot")
+				.transition()
+				.duration(200)
+				.style("fill", "lightgrey")
+				.attr("r", 3)
+
+			d3.selectAll("." + selectGroup)
+				.transition()
+				.duration(200)
+				.style("fill", color(selectGroup))
+				.attr("r", 7)
+		}
+
+		// Not Highlight
+		var doNotHighlight = function(){
+			d3.selectAll(".dot")
+				.transition()
+				.duration(200)
+				.style("fill", "lightgrey")
+				.attr("r", 5 )
+		}
+
+		// Dots
+		svg.append('g')
+			.selectAll("dot")
+			.data(info)
+			.enter()
+			.append("circle")
+				.attr("class", function (d) {
+					
+					return "dot " + d.group;
+				
+				})
+				.attr("cx", function (d) {
+					
+					return x(d.s_length);
+				
+				})
+				.attr("cy", function (d) {
+					
+					return y(d.p_length);
+				
+				})
+				.attr("r", 5)
+				.style("fill", function (d) {
+					
+					return color(d.group);
+				
+				})
+			.on("mouseover", highlight)
+			.on("mouseleave", doNotHighlight )
+
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+ScatterChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired,
+	margin: PropTypes.array.isRequired
+}
+
+// ############################################################
+
+class LollipopChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+		
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		// Sort data
+		info.sort(function(b, a) {
+			return a.resident - b.resident;
+		});
+
+		// X-Axis
+		var x = d3.scaleLinear()
+			.domain([0, 100000000])
+			.range([ 0, width]);
+
+		svg.append("g")
+			.attr("transform", "translate(0," + height + ")")
+			.call(d3.axisBottom(x))
+			.selectAll("text")
+				.attr("transform", "translate(-10,0)rotate(-45)")
+				.style("text-anchor", "end");
+
+		// Y-Axis
+		var y = d3.scaleBand()
+			.range([ 0, height ])
+			.domain(info.map(function(d) {
+				
+				return d.country;
+			
+			}))
+			.padding(1);
+
+		svg.append("g")
+			.call(d3.axisLeft(y))
+
+		// Lines
+		svg.selectAll("myline")
+			.data(info)
+			.enter()
+			.append("line")
+				.attr("x1", function(d) {
+					
+					return x(d.resident);
+				
+				})
+				.attr("x2", x(0))
+				.attr("y1", function(d) {
+					
+					return y(d.country);
+				
+				})
+				.attr("y2", function(d) {
+					
+					return y(d.country);
+				
+				})
+				.attr("stroke", "grey")
+
+		// Circles
+		svg.selectAll("mycircle")
+			.data(info)
+			.enter()
+			.append("circle")
+				.attr("cx", function(d) {
+					
+					return x(d.resident);
+				
+				})
+				.attr("cy", function(d) {
+					
+					return y(d.country);
+				
+				})
+				.attr("r", "7")
+				.style("fill", "#69b3a2")
+				.attr("stroke", "black")
+
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+LollipopChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired,
+	margin: PropTypes.array.isRequired
+}
+
+// ############################################################
+
+class ParallelChart extends Component {
+	constructor(props) {
+		super(props)
+		this.state = {}
+	}
+
+	componentDidMount(){
+		this.drawChart();
+	}
+
+	drawChart() {
+
+		const element = "#" + this.props.id;
+		const info = this.props.data;
+
+		var margin = this.props.margin,
+			width = this.props.width - margin.left - margin.right,
+			height = this.props.height - margin.top - margin.bottom;
+		
+		// Build element
+		var svg = d3.select(element)
+			.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// Dynamic main data
+		var arr = [];
+
+		for(var i = 0; i < info.length; i++){
+
+			arr.push(info[i].group);
+
+		}
+
+		var secondArr = [];
+
+		for(var obj in info){
+
+			if(info.hasOwnProperty(obj)){
+
+				for(var prop in info[obj]){
+
+					if(info[obj].hasOwnProperty(prop)){
+
+						secondArr.push(prop);
+						
+					}
+
+				}
+
+			}
+
+		}
+
+		function uniq(a) {
+			var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
+
+			return a.filter(function(item) {
+
+				var type = typeof item;
+				if(type in prims){
+
+					return prims[type].hasOwnProperty(item) ? false : (prims[type][item] = true);
+					
+				}	else {
+					
+					return objs.indexOf(item) >= 0 ? false : objs.push(item);
+				
+				}
+
+			});
+		}
+        
+		function removeLastIndex(){
+
+			var x = uniq(secondArr);
+			
+			x.pop();
+				
+			return x;
+
+		}
+
+		// Color
+		var color = d3.scaleOrdinal()
+			.domain(uniq(arr))
+			.range(["#ff0000", "#c0c0c0", "#00ff00", "#ffa500", "#ffff00", "#008800", "#ff00ff", "#000080", "#0000ff", "#d2691e"]);
+
+		var dimensions = removeLastIndex();
+
+		var y = {};
+
+		for (i in dimensions) {
+			let name = dimensions[i];
+			y[name] = d3.scaleLinear()
+				.domain( [0,8] )
+				.range([height, 0])
+		}
+
+		// X-Scale
+		var x = d3.scalePoint()
+			.range([0, width])
+			.domain(dimensions);
+
+		// Highlight
+		var highlight = function(d){
+
+			let selectGroup = d.group
+
+			d3.selectAll(".line")
+				.transition().duration(200)
+				.style("stroke", "lightgrey")
+				.style("opacity", "0.2")
+			
+			d3.selectAll("." + selectGroup)
+				.transition().duration(200)
+				.style("stroke", color(selectGroup))
+				.style("opacity", "1")
+
+		}
+
+		// Not highlight
+		var doNotHighlight = function(d){
+			d3.selectAll(".line")
+				.transition().duration(200).delay(1000)
+				.style("stroke", function(d){
+					
+					return( color(d.group));
+				
+				})
+				.style("opacity", "1")
+		}
+
+		// Path - Return X and Y coordinates
+		function path(d) {
+
+			return d3.line()(dimensions.map(function(p) {
+				
+				return [x(p), y[p](d[p])];
+			
+			}));
+
+		}
+
+		// Draw the lines
+		svg
+			.selectAll("myPath")
+			.data(info)
+			.enter()
+			.append("path")
+				.attr("class", function (d) {
+					
+					return "line " + d.group
+				
+				} )
+				.attr("d",  path)
+				.style("fill", "none" )
+				.style("stroke", function(d){
+					
+					return( color(d.group))
+				
+				})
+				.style("opacity", 0.5)
+				.on("mouseover", highlight)
+				.on("mouseleave", doNotHighlight )
+
+		// Draw Axis:
+		svg.selectAll("myAxis")
+			.data(dimensions).enter()
+			.append("g")
+			.attr("class", "axis")
+			.attr("transform", function(d) {
+				
+				return "translate(" + x(d) + ")";
+			
+			})
+			.each(function(d) {
+				
+				d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d]));
+			
+			})
+			.append("text")
+				.style("text-anchor", "middle")
+				.attr("y", -9)
+				.text(function(d) {
+					
+					return d;
+				
+				})
+				.style("fill", "black")
+	
+	}
+
+	render() {
+		return (
+			<div className="chart" id={this.props.id}></div>
+		);
+	}
+}
+
+ParallelChart.propTypes = {
+	id: PropTypes.string.isRequired,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	data: PropTypes.any.isRequired,
+	margin: PropTypes.array.isRequired
+}
+
+
+// ############################################################
+
 export {
 	BarChart,
 	PieChart,
@@ -1601,5 +2085,8 @@ export {
 	WordCloudChart,
 	NetworkChart,
 	TreeChart,
-	ClusterChart
+	ClusterChart,
+	ScatterChart,
+	LollipopChart,
+	ParallelChart
 }

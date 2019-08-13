@@ -270,6 +270,54 @@ this.state = {
     data: [{"id":"IT","value":""},{"id":"IT.analytics","value":""},{"id":"IT.analytics.GoogleAnalytics","value":1},{"id":"IT.analytics.AdobeAnalytics","value":2},{"id":"IT.cms","value":""},{"id":"IT.cms.Wordpress","value":20},{"id":"IT.cms.Magento","value":21}],
     width: 800,
     height: 1200
+  },
+  scatter: {
+    id: "scatter",
+    data: [{"s_length":5.1,"s_width":3.5,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":4.9,"s_width":3,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":4.7,"s_width":3.2,"p_length":1.3,"p_width":0.2,"group":"IT"},{"s_length":4.6,"s_width":3.1,"p_length":1.5,"p_width":0.2,"group":"IT"},{"s_length":5,"s_width":3.6,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":5.4,"s_width":3.9,"p_length":1.7,"p_width":0.4,"group":"IT"},{"s_length":7,"s_width":3.2,"p_length":4.7,"p_width":1.4,"group":"Design"},{"s_length":6.4,"s_width":3.2,"p_length":4.5,"p_width":1.5,"group":"Design"},{"s_length":6.9,"s_width":3.1,"p_length":4.9,"p_width":1.5,"group":"Design"},{"s_length":5.5,"s_width":2.3,"p_length":4,"p_width":1.3,"group":"Design"},{"s_length":6.5,"s_width":2.8,"p_length":4.6,"p_width":1.5,"group":"Design"},{"s_length":5.7,"s_width":2.8,"p_length":4.5,"p_width":1.3,"group":"Design"},{"s_length":6.3,"s_width":3.3,"p_length":6,"p_width":2.5,"group":"Management"},{"s_length":5.8,"s_width":2.7,"p_length":5.1,"p_width":1.9,"group":"Management"},{"s_length":7.1,"s_width":3,"p_length":5.9,"p_width":2.1,"group":"Management"},{"s_length":6.3,"s_width":2.9,"p_length":5.6,"p_width":1.8,"group":"Management"},{"s_length":6.5,"s_width":3,"p_length":5.8,"p_width":2.2,"group":"Management"},{"s_length":7.6,"s_width":3,"p_length":6.6,"p_width":2.1,"group":"Management"}],
+    width: 720,
+    height: 480,
+    margin: { 
+      left: 50, 
+      top: 30, 
+      right: 30, 
+      bottom: 40
+    }
+  },
+  lollipop: {
+    id: "lollipop",
+    data: [{
+      "country": "Germany",
+      "resident": "82790000"
+    }, {
+      "country": "Netherlands",
+      "resident": "17080000"
+    }, {
+      "country": "Austria",
+      "resident": "8773000"
+    }, {
+      "country": "Switzerland",
+      "resident": "8420000"
+    }],
+    width: 720,
+    height: 480,
+    margin: {
+      left: 80,
+      top: 30,
+      right: 40,
+      bottom: 60
+    }
+  },
+  parallel: {
+    id: "parallel",
+    data: [{"s_length":5.1,"s_width":3.5,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":4.9,"s_width":3,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":4.7,"s_width":3.2,"p_length":1.3,"p_width":0.2,"group":"IT"},{"s_length":4.6,"s_width":3.1,"p_length":1.5,"p_width":0.2,"group":"IT"},{"s_length":5,"s_width":3.6,"p_length":1.4,"p_width":0.2,"group":"IT"},{"s_length":5.4,"s_width":3.9,"p_length":1.7,"p_width":0.4,"group":"IT"},{"s_length":7,"s_width":3.2,"p_length":4.7,"p_width":1.4,"group":"Design"},{"s_length":6.4,"s_width":3.2,"p_length":4.5,"p_width":1.5,"group":"Design"},{"s_length":6.9,"s_width":3.1,"p_length":4.9,"p_width":1.5,"group":"Design"},{"s_length":5.5,"s_width":2.3,"p_length":4,"p_width":1.3,"group":"Design"},{"s_length":6.5,"s_width":2.8,"p_length":4.6,"p_width":1.5,"group":"Design"},{"s_length":5.7,"s_width":2.8,"p_length":4.5,"p_width":1.3,"group":"Design"},{"s_length":6.3,"s_width":3.3,"p_length":6,"p_width":2.5,"group":"Management"},{"s_length":5.8,"s_width":2.7,"p_length":5.1,"p_width":1.9,"group":"Management"},{"s_length":7.1,"s_width":3,"p_length":5.9,"p_width":2.1,"group":"Management"},{"s_length":6.3,"s_width":2.9,"p_length":5.6,"p_width":1.8,"group":"Management"},{"s_length":6.5,"s_width":3,"p_length":5.8,"p_width":2.2,"group":"Management"},{"s_length":7.6,"s_width":3,"p_length":6.6,"p_width":2.1,"group":"Management"}],
+    width: 720,
+    height: 480,
+    margin: { 
+      left: 50, 
+      top: 30, 
+      right: 30, 
+      bottom: 40
+    }
   }
 }
 
@@ -298,6 +346,12 @@ Render:
 <TreeChart id={this.state.tree.id} width={this.state.tree.width} height={this.state.tree.height} data={this.state.tree.data}></TreeChart>
 
 <ClusterChart id={this.state.cluster.id} width={this.state.cluster.width} height={this.state.cluster.height} data={this.state.cluster.data}></ClusterChart>
+
+<ScatterChart id={this.state.scatter.id} width={this.state.scatter.width} height={this.state.scatter.height} data={this.state.scatter.data} margin={this.state.scatter.margin}></ScatterChart>
+
+<LollipopChart id={this.state.lollipop.id} width={this.state.lollipop.width} height={this.state.lollipop.height} data={this.state.lollipop.data} margin={this.state.lollipop.margin}></LollipopChart>
+
+<ParallelChart id={this.state.parallel.id} width={this.state.parallel.width} height={this.state.parallel.height} data={this.state.parallel.data} margin={this.state.parallel.margin}></ParallelChart>
 ```
 
 
